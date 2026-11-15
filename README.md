@@ -6,8 +6,8 @@ TaskPilot is a task manager controlled through a chat assistant. The assistant u
 
 - Frontend: https://taskpilot-frontend-bvishnupriyan2006-9902s-projects.vercel.app
 - Backend API documentation: https://taskpilot-backend-bvishnupriyan2006-9902s-projects.vercel.app/docs
-- Admin: admin@taskpilot.demo (password provided separately)
-- User: user@taskpilot.demo (password provided separately)
+- Admin: admin@taskpilot.demo / au91rrejimVOhpW0
+- User: user@taskpilot.demo / VaI21Y3Q_lRk2qy8
 
 These accounts are public demo accounts. Their tasks may be changed by other reviewers; do not store private information in them. Free-tier limits can affect availability.
 
