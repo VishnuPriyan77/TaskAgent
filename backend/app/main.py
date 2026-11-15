@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from datetime import datetime, timedelta, timezone
 from typing import Literal
@@ -156,6 +157,13 @@ def chat(body: ChatInput, user: User = Depends(current_user), db: Session = Depe
                     except (ValueError, TypeError, KeyError): result = {'error':'Invalid tool arguments'}
                     calls.append({'name':name, 'result':result})
                     messages.append({'role':'tool','tool_call_id':call['id'],'content':json.dumps(result)})
+    except httpx.HTTPStatusError as exc:
+        try:
+            provider_error = exc.response.json().get('error', {})
+            logging.error('Gemini request failed: status=%s code=%s message=%s', exc.response.status_code, provider_error.get('status'), provider_error.get('message', '')[:300])
+        except (ValueError, AttributeError):
+            logging.error('Gemini request failed: status=%s', exc.response.status_code)
+        raise HTTPException(502, 'The AI service could not complete this request. Some task changes may already have been saved; check your task list before retrying.')
     except (httpx.HTTPError, KeyError, IndexError, ValueError):
         raise HTTPException(502, 'The AI service could not complete this request. Some task changes may already have been saved; check your task list before retrying.')
     raise HTTPException(502, 'The AI reached its action limit. Some changes may have been saved; check your task list before retrying.')
