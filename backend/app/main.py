@@ -45,6 +45,7 @@ app = FastAPI(title='TaskPilot API')
 app.add_middleware(CORSMiddleware, allow_origins=[x.strip() for x in os.getenv('CORS_ORIGINS', 'http://localhost:5173').split(',')], allow_credentials=False, allow_methods=['*'], allow_headers=['*'])
 with engine.begin() as connection:
     if not is_sqlite:
+        connection.execute(text('SELECT pg_advisory_xact_lock(746582013)'))
         connection.execute(text('CREATE SCHEMA IF NOT EXISTS taskpilot'))
         connection.execute(text('REVOKE ALL ON SCHEMA taskpilot FROM PUBLIC'))
     Base.metadata.create_all(connection)
@@ -146,7 +147,7 @@ def chat(body: ChatInput, user: User = Depends(current_user), db: Session = Depe
     try:
         with httpx.Client(timeout=30) as client:
             for _ in range(8):
-                response = client.post('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', headers={'Authorization':f'Bearer {key}'}, json={'model':os.getenv('GEMINI_MODEL','gemini-2.5-flash'),'messages':messages,'tools':TOOLS,'tool_choice':'auto','temperature':0})
+                response = client.post('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', headers={'Authorization':f'Bearer {key}'}, json={'model':os.getenv('GEMINI_MODEL','gemini-3.5-flash-lite'),'messages':messages,'tools':TOOLS,'tool_choice':'auto','temperature':0})
                 response.raise_for_status()
                 msg = response.json()['choices'][0]['message']; messages.append(msg)
                 tool_calls = msg.get('tool_calls') or []

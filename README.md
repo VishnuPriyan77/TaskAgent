@@ -15,7 +15,7 @@ This repository is a local implementation. **Live frontend, backend, public repo
 
 - FastAPI and SQLAlchemy implement the API and persistent storage; PostgreSQL is intended for deployment. SQLite is only a local convenience.
 - React and Vite provide the frontend.
-- Gemini’s OpenAI-compatible tool-calling API runs the agent. The model is configurable via `GEMINI_MODEL` (default `gemini-2.5-flash`).
+- Gemini’s OpenAI-compatible tool-calling API runs the agent. The model is configurable via `GEMINI_MODEL` (default `gemini-3.5-flash-lite`).
 - Passwords are Argon2-hashed; signed JWTs expire after 12 hours. Every signup receives the user role. A trusted operator promotes an existing account using a server-side script; there is no public admin promotion endpoint.
 - The backend selects tasks using the authenticated user's ID on every tool invocation, even for admins. The admin overview is a separate, backend-protected read-only endpoint. No user-provided owner ID is trusted.
 - The agent can make several tool calls across multiple rounds. Results are passed back to the model and displayed as an expandable tool trace. The application commits each action separately; if a later step fails, earlier actions remain saved and the UI warns users to inspect the list.
