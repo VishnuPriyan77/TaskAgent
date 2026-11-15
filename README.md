@@ -2,18 +2,18 @@
 
 TaskPilot is a task manager controlled through a chat assistant. The assistant uses LLM function calling to list, create, update, and delete the signed-in user's tasks, including multiple actions in one request. The task list refreshes after each response, including errors.
 
-## Submission status
+## Live demo
 
-This repository is a local implementation. **Live frontend, backend, public repository, and demo accounts are not configured yet.** Add their URLs and credentials here before submitting. Keep the deployed app running for at least 14 days. Render's free service may take time to wake after inactivity.
+- Frontend: https://taskpilot-frontend-bvishnupriyan2006-9902s-projects.vercel.app
+- Backend API documentation: https://taskpilot-backend-bvishnupriyan2006-9902s-projects.vercel.app/docs
+- Admin: admin@taskpilot.demo (password provided separately)
+- User: user@taskpilot.demo (password provided separately)
 
-- Frontend URL: not deployed
-- Backend URL and `/docs`: not deployed
-- Demo admin: not provisioned
-- Demo user: not provisioned
+These accounts are public demo accounts. Their tasks may be changed by other reviewers; do not store private information in them. Free-tier limits can affect availability.
 
 ## Stack and design
 
-- FastAPI and SQLAlchemy implement the API and persistent storage; PostgreSQL is intended for deployment. SQLite is only a local convenience.
+- FastAPI and SQLAlchemy implement the API and persistent storage; Supabase PostgreSQL persists deployed data in a separate schema with row-level security. SQLite is only a local convenience.
 - React and Vite provide the frontend.
 - Gemini’s OpenAI-compatible tool-calling API runs the agent. The model is configurable via `GEMINI_MODEL` (default `gemini-3.5-flash-lite`).
 - Passwords are Argon2-hashed; signed JWTs expire after 12 hours. Every signup receives the user role. A trusted operator promotes an existing account using a server-side script; there is no public admin promotion endpoint.
@@ -71,4 +71,4 @@ pip install pytest
 PYTHONPATH=. pytest
 ```
 
-The tests cover backend role enforcement, user isolation, and a mocked multi-step tool-calling exchange. A real provider and deployed end-to-end flow must still be checked with valid credentials.
+The tests cover backend role enforcement, user isolation, and a mocked multi-step tool-calling exchange. The deployed provider was also tested with a real create request and a multi-step update-and-create request.
