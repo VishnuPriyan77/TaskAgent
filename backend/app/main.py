@@ -10,19 +10,21 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pwdlib import PasswordHash
 from pydantic import BaseModel, Field
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, create_engine, select
+from sqlalchemy import Boolean, DateTime, ForeignKey, MetaData, String, create_engine, select, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
 
 DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite:///./taskpilot.db').replace('postgres://', 'postgresql+psycopg://', 1).replace('postgresql://', 'postgresql+psycopg://', 1)
 SECRET = os.getenv('JWT_SECRET', '')
 if not SECRET or len(SECRET) < 32:
     raise RuntimeError('Set JWT_SECRET to a random value of at least 32 characters')
-engine = create_engine(DATABASE_URL, connect_args={'check_same_thread': False} if DATABASE_URL.startswith('sqlite') else {})
+is_sqlite = DATABASE_URL.startswith('sqlite')
+engine = create_engine(DATABASE_URL, connect_args={'check_same_thread': False} if is_sqlite else {}, **({} if is_sqlite else {'pool_size': 1, 'max_overflow': 1, 'pool_pre_ping': True}))
 SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 password_hash = PasswordHash.recommended()
 security = HTTPBearer()
 
-class Base(DeclarativeBase): pass
+class Base(DeclarativeBase):
+    metadata = MetaData(schema=None if is_sqlite else 'taskpilot')
 class User(Base):
     __tablename__ = 'users'
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -40,7 +42,15 @@ class Task(Base):
 
 app = FastAPI(title='TaskPilot API')
 app.add_middleware(CORSMiddleware, allow_origins=[x.strip() for x in os.getenv('CORS_ORIGINS', 'http://localhost:5173').split(',')], allow_credentials=False, allow_methods=['*'], allow_headers=['*'])
-Base.metadata.create_all(engine)
+with engine.begin() as connection:
+    if not is_sqlite:
+        connection.execute(text('CREATE SCHEMA IF NOT EXISTS taskpilot'))
+        connection.execute(text('REVOKE ALL ON SCHEMA taskpilot FROM PUBLIC'))
+    Base.metadata.create_all(connection)
+    if not is_sqlite:
+        for table in ('users', 'tasks'):
+            connection.execute(text(f'ALTER TABLE taskpilot.{table} ENABLE ROW LEVEL SECURITY'))
+            connection.execute(text(f'REVOKE ALL ON TABLE taskpilot.{table} FROM PUBLIC'))
 
 def db_session():
     with SessionLocal() as db: yield db
